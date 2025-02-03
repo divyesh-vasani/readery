@@ -10,15 +10,15 @@ const Test = () => {
         e.preventDefault();  // Prevent the form from reloading the page
     console.log("Form submitted",data); 
 
-        // axios.post("http://localhost:5000/auth/login",{
-        //     email: mail,
-        //     password: pass
-        // })
-        // .then((res)=>{
-        //     alert(res.data.message,"res")
-        // },(error)=>{
-        //     alert(error.response.data.message,"error")
-        // })
+        axios.post("http://localhost:5000/auth/login",{
+            username: data.username,
+            password: data.password
+        })
+        .then((res)=>{
+            alert(res.data.message,"res")
+        },(error)=>{
+            alert(error,"error")
+        })
     }
 
     const registerUser = (e,data) =>{
@@ -44,13 +44,13 @@ const Test = () => {
             <form onSubmit={handleSubmit(loginUser)}>
                 <input 
                     type='text' 
-                    placeholder='mail' 
-                    {...register("mail")}
+                    placeholder='username' 
+                    {...register("username")}
                 />
                 <input 
                     type='password' 
-                    placeholder='pass' 
-                    {...register("pass")}
+                    placeholder='password' 
+                    {...register("password")}
                 />
                 <button type='submit'>login</button>
             </form>
