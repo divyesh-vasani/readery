@@ -1,33 +1,29 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const cors = require("cors");
 const passport = require("passport");
-const session = require("express-session");
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:3000', // Your frontend URL
+  credentials: true,  // Allow cookies to be sent with the request
+};
 
-// ✅ Make sure session middleware is set up before passport
-app.use(
-  session({
-    secret: process.env.SECRET_KEY,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 day
-  })
-);
+// Middleware
+app.use(cookieParser());
+app.use(express.json());
+app.use(cors(corsOptions)); 
 
 // Initialize passport after the session middleware
 require("./config/passport");
 app.use(passport.initialize());
-app.use(passport.session());
 
 // Routes
 app.use("/auth", authRoutes);
