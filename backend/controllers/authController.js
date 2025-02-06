@@ -56,12 +56,13 @@ const loginUser = async (req, res) => {
   }
 };
 
-// const logoutUser = (req, res) => {
-//   req.logout((err) => {
-//     if (err) return res.status(500).json({ error: "Logout failed" });
-//     res.json({ message: "Logged out successfully" });
-//   });
-// };
+const logoutUser = (req, res) => {
+  res.cookie("jwtToken", "", {
+    httpOnly: true,
+    expires: new Date(0), // Expire the cookie immediately
+  });
+  res.status(200).json({ message: "Logged out successfully" });
+};
 
 const getProfile = (req, res) => {
   if (!req.user) {
@@ -71,5 +72,19 @@ const getProfile = (req, res) => {
   res.json({ user: req.user });
 };
 
+const verifyAuth = (req, res) => {
+  if (!req.user) {
+    return res
+      .status(401)
+      .json({ isAuthenticated: false, message: "Not authenticated" });
+  }
+  res.json({ isAuthenticated: true, user: req.user });
+};
 
-module.exports = { registerUser, loginUser, getProfile };
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  verifyAuth,
+  logoutUser,
+};
