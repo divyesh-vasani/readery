@@ -1,13 +1,18 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { loginFailure, loginSuccess,loginStart,authSlice } from "./redux/authSlice";
 
 const Login = () => {
   const { register, handleSubmit } = useForm();
+  const {isAuthenticated} = useSelector((state) => state.auth);
+  console.log(isAuthenticated,"isAuthenticated")
+  const dispatch = useDispatch();
 
   const loginUser = (data, e) => {
     e.preventDefault();
-
+    dispatch(loginStart());
     axios.post(
         "http://localhost:5000/auth/login",
         {
@@ -19,10 +24,12 @@ const Login = () => {
         }
       )
       .then((res) => {
+        dispatch(loginSuccess(res.data));
         console.log(res, "res"); 
       })
       .catch((error) => {
-        alert(error, "error"); 
+        console.log(error,"error")
+        dispatch(loginFailure(error.response?.data?.message || "Login failed"));
       });
   };
 

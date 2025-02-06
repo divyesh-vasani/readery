@@ -1,7 +1,10 @@
 import React from 'react'
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom'
 
 const Home = () => {
+  const { user, loading, error } = useSelector((state) => state.auth);
+  console.log(user, "from home page")
   return (
     <div>Home
 
