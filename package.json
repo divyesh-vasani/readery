@@ -1,8 +1,8 @@
 {
   "name": "readery",
   "version": "1.0.0",
-"private": true,
-"workspaces": [
+  "private": true,
+  "workspaces": [
     "frontend",
     "backend"
   ],
