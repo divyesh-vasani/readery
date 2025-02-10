@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const googleBooksRoutes = require('./routes/bookRoute');
+const bookshelfRoutes = require('./routes/bookshelfRoutes');
 const cors = require("cors");
 const passport = require("passport");
 
@@ -29,6 +30,7 @@ app.use(passport.initialize());
 // Routes
 app.use("/auth", authRoutes);
 app.use('/books', googleBooksRoutes);
+app.use("/bookshelves", bookshelfRoutes);
 
 // MongoDB Connection
 mongoose
