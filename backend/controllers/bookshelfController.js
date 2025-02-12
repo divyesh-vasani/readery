@@ -4,39 +4,41 @@ const User = require("../models/User"); // Import User model
 const addBookToBookshelf = async (req, res) => {
   try {
     const userId = req.user.userId; // Get user ID from token (decoded in middleware)
-    console.log("UserId:", userId);
-    const { book } = req.body; // Get book data & category (e.g., "favorites", "currentlyReading")
-    console.log(book, "book");
-    if (!book.id || !book.title) {
-      return res
-        .status(400)
-        .json({ message: "Book id and title are required" });
+    const { bookshelfName, book } = req.body; // Get bookshelf name (e.g., "Fvt") and book data
+    if (!bookshelfName || !book || !book.id || !book.title) {
+      return res.status(400).json({ message: "Bookshelf name, book id, and title are required" });
     }
 
     // Find user by ID
     const user = await User.findById(userId);
-    console.log(user.bookshelves, "user");
-
     if (!user) {
       return res.status(404).json({ message: "User not found!" });
     }
 
-    const isBookAlreadyAdded = user.bookshelves.some(
-      (book) => book.id === book.id
-    );
-    console.log("Is Book Already Added?", isBookAlreadyAdded);
-
-    if (isBookAlreadyAdded === true) {
-      res.send("Book Already Added");
-    } else {
-      user.bookshelves.push({ books: [book] });
-      await user.save(); // Save changes
-
-      res.status(200).json({
-        message: "Book added to bookshelf!",
-        bookshelves: user.bookshelves,
-      });
+    // Check if the bookshelf exists, if not, create it
+    if (!user.bookshelves[bookshelfName]) {
+      user.bookshelves[bookshelfName] = []; // Create a new bookshelf if it doesn't exist
     }
+
+    // Get the existing bookshelf
+    const existingBookshelf = user.bookshelves[bookshelfName];
+
+    // Check if the book already exists in the bookshelf
+    const isBookAlreadyAdded = existingBookshelf.some((b) => b.id === book.id);
+
+    if (isBookAlreadyAdded) {
+      return res.status(400).json({ message: "Book already exists in the bookshelf!" });
+    }
+
+    // Add the book to the bookshelf
+    existingBookshelf.push(book);
+    await user.save(); // Save changes to the user document
+
+    res.status(200).json({
+      message: "Book added to bookshelf!",
+      bookshelves: user.bookshelves,
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error!" });

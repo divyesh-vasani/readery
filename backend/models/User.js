@@ -12,12 +12,10 @@ const BookSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  bookshelves: [
-    {
-      // category: { type: String, required: true }, // Category like 'fvt', 'want to read', etc.
-      books: [BookSchema], // An array of books under each category
-    },
-  ],
+  bookshelves: {
+    type: Object, // Changed to a plain object
+    default: {}, // Default to an empty object if no bookshelves are added
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);
