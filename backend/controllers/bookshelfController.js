@@ -3,40 +3,49 @@ const User = require("../models/User"); // Import User model
 // Add Book to Bookshelf
 const addBookToBookshelf = async (req, res) => {
   try {
-    const userId = req.user.userId; // Get user ID from token (decoded in middleware)
-    const { bookshelfName, book } = req.body; // Get bookshelf name (e.g., "Fvt") and book data
+    const userId = req.user.userId;
+    const { bookshelfName, book } = req.body;
+
     if (!bookshelfName || !book || !book.id || !book.title) {
       return res.status(400).json({ message: "Bookshelf name, book id, and title are required" });
     }
 
-    // Find user by ID
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found!" });
     }
 
-    // Check if the bookshelf exists, if not, create it
-    if (!user.bookshelves[bookshelfName]) {
-      user.bookshelves[bookshelfName] = []; // Create a new bookshelf if it doesn't exist
+    // Ensure bookshelves object exists
+    if (!user.bookshelves) {
+      user.bookshelves = {};
     }
 
-    // Get the existing bookshelf
-    const existingBookshelf = user.bookshelves[bookshelfName];
+    // ✅ Ensure the specific bookshelf exists
+    if (!user.bookshelves[bookshelfName]) {
+      user.bookshelves[bookshelfName] = [];
+    } 
 
-    // Check if the book already exists in the bookshelf
-    const isBookAlreadyAdded = existingBookshelf.some((b) => b.id === book.id);
+    const isBookAlreadyAdded = user?.bookshelves[bookshelfName].some((b) => b.id === book.id);
+
+    console.log(isBookAlreadyAdded,"isBookAlreadyAdded")
 
     if (isBookAlreadyAdded) {
-      return res.status(400).json({ message: "Book already exists in the bookshelf!" });
+      return res.status(400).json({ message: "Book already exists in a bookshelf!" });
     }
 
-    // Add the book to the bookshelf
-    existingBookshelf.push(book);
-    await user.save(); // Save changes to the user document
+    user.bookshelves[bookshelfName].push(book);
+
+    // 🔥 Explicitly mark `bookshelves` as modified
+    user.markModified("bookshelves");
+
+    // ✅ Save the changes
+    await user.save();
+
+    const updatedUser = await User.findById(userId);
 
     res.status(200).json({
       message: "Book added to bookshelf!",
-      bookshelves: user.bookshelves,
+      bookshelves: updatedUser.bookshelves, // Return updated bookshelves
     });
 
   } catch (error) {
@@ -44,6 +53,8 @@ const addBookToBookshelf = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error!" });
   }
 };
+
+
 
 // Fetch User's Bookshelves
 const getUserBookshelves = async (req, res) => {
