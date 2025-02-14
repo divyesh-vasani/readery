@@ -59,8 +59,8 @@ const addBookToBookshelf = async (req, res) => {
 // Fetch User's Bookshelves
 const getUserBookshelves = async (req, res) => {
   try {
-    const userId = req.user.id; // Get user ID from token
-
+    const userId = req.user.userId;
+    
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found!" });
