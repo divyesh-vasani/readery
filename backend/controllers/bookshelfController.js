@@ -68,13 +68,12 @@ const addBookToBookshelf = async (req, res) => {
 const getUserBookshelves = async (req, res) => {
   try {
     const userId = req.user.userId;
-    
-    const user = await User.findById(userId);
-    if (!user) {
+    let bookshelfDoc = await Bookshelf.findOne({ user: userId });
+    console.log(bookshelfDoc.bookshelves,"bookshelfDoc----")
+    if (!userId) {
       return res.status(404).json({ message: "User not found!" });
     }
-
-    res.status(200).json({ bookshelves: user.bookshelves });
+    res.status(200).json({ bookshelves: bookshelfDoc.bookshelves });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error!" });
