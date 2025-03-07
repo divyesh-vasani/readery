@@ -1,4 +1,5 @@
-const User = require("../models/User"); // Import User model
+const User = require("../models/User"); 
+const Bookshelf = require("../models/Bookshelf");
 
 // Add Book to Bookshelf
 const addBookToBookshelf = async (req, res) => {
@@ -7,54 +8,61 @@ const addBookToBookshelf = async (req, res) => {
     const { bookshelfName, book } = req.body;
 
     if (!bookshelfName || !book || !book.id || !book.title) {
-      return res.status(400).json({ message: "Bookshelf name, book id, and title are required" });
+      return res.status(400).json({ message: "Bookshelf name, book ID, and title are required" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found!" });
+    // Find the user's bookshelf document
+    let bookshelfDoc = await Bookshelf.findOne({ user: userId });
+
+    if (!bookshelfDoc) {
+      // If no Bookshelf document exists, create one
+      bookshelfDoc = new Bookshelf({
+        user: userId,
+        bookshelves: { [bookshelfName]: [book] }, // Create first bookshelf with book
+      });
+
+      await bookshelfDoc.save();
+
+      // Link the Bookshelf to the User document (store reference)
+      await User.findByIdAndUpdate(userId, { bookshelves: bookshelfDoc._id });
+    } else {
+      // Ensure bookshelves is initialized
+      if (!bookshelfDoc.bookshelves) {
+        bookshelfDoc.bookshelves = {};
+      }
+
+      // If the bookshelf does not exist, create it
+      if (!bookshelfDoc.bookshelves[bookshelfName]) {
+        bookshelfDoc.bookshelves[bookshelfName] = [];
+      }
+
+      // Check if book already exists
+      const existingBooks = bookshelfDoc.bookshelves[bookshelfName];
+      const isBookAlreadyAdded = existingBooks.some((b) => b.id === book.id);
+
+      if (isBookAlreadyAdded) {
+        return res.status(400).json({ message: "Book already exists in the bookshelf!" });
+      }
+
+      // Add book to the bookshelf
+      existingBooks.push(book);
+      bookshelfDoc.bookshelves[bookshelfName] = existingBooks;
+
+      // ✅ Mark bookshelves as modified so Mongoose detects changes
+      bookshelfDoc.markModified("bookshelves");
+
+      await bookshelfDoc.save();
     }
-
-    // Ensure bookshelves object exists
-    if (!user.bookshelves) {
-      user.bookshelves = {};
-    }
-
-    // ✅ Ensure the specific bookshelf exists
-    if (!user.bookshelves[bookshelfName]) {
-      user.bookshelves[bookshelfName] = [];
-    } 
-
-    const isBookAlreadyAdded = user?.bookshelves[bookshelfName].some((b) => b.id === book.id);
-
-    console.log(isBookAlreadyAdded,"isBookAlreadyAdded")
-
-    if (isBookAlreadyAdded) {
-      return res.status(400).json({ message: "Book already exists in a bookshelf!" });
-    }
-
-    user.bookshelves[bookshelfName].push(book);
-
-    // 🔥 Explicitly mark `bookshelves` as modified
-    user.markModified("bookshelves");
-
-    // ✅ Save the changes
-    await user.save();
-
-    const updatedUser = await User.findById(userId);
 
     res.status(200).json({
       message: "Book added to bookshelf!",
-      bookshelves: updatedUser.bookshelves, // Return updated bookshelves
+      bookshelves: bookshelfDoc.bookshelves,
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error!" });
   }
 };
-
-
 
 // Fetch User's Bookshelves
 const getUserBookshelves = async (req, res) => {
